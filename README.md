@@ -1,5 +1,5 @@
 # Conductance-quantique
 
-This project's goal is to create a simple python program that allows to measure a resistance using quantum conductance.
+L'objectif de ce projet est de créer un programme Python simple permettant de mesurer une résistance à l'aide de la conductance quantique.
 
-It will contain four main files:
+La structure du projet est schématisé dans `structure du code.png`.
