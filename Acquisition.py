@@ -61,7 +61,7 @@ class Acquisition:
 
         with open(self.export_target, 'w', newline='') as csv_file:
             writer = csv.writer(csv_file)
-            writer.writerow(['Voltage_fil', 'Votlage_source'])
+            writer.writerow(['Voltage_wire', 'Votlage_source'])
 
             for key in self.data_shelf.keys():
 
