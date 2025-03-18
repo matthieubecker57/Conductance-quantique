@@ -6,12 +6,12 @@ csv_file = pd.read_csv(r"test.csv")  # Mettre le file_path vers son csv
 
 voltage_wire_list = csv_file['Voltage_wire']
 
-acceptable_deviation = 0.5
+acceptable_deviation = 1
 
 concentration_area = {}
 
 for value in voltage_wire_list:
-    rounded = round(value, 5)
+    rounded = round(value, 3)
 
     try:
         concentration_area[rounded] += 1
@@ -19,6 +19,5 @@ for value in voltage_wire_list:
         concentration_area[rounded] = 1
 
 
-
-plt.plot(concentration_area.keys(), concentration_area.values(), 'o', markersize=0.5)
+plt.plot(concentration_area.keys(), concentration_area.values(), 'o', markersize=1)
 plt.show()
