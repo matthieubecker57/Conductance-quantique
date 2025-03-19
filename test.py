@@ -23,3 +23,4 @@ with open(r"test.csv", 'w', newline='') as csv_file:
 
     for value in data_range:
         writer.writerow([value])
+
