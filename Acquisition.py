@@ -10,12 +10,12 @@ class Acquisition:
     Arguments:
         - gold_channel: the voltage across the gold wire
         - source_channel: the voltage across the whole circuit (so the output of the source)
-        - samples_by_second: the rate of sample acquisition per channel per second. Default set to 10000
+        - samples_by_second: the rate of sample acquisition per channel per second. Default set to 100000
         - export_target: the csv file to which the data will be sent. Default set to acquisition_data.csv
         - number_of_samples_per_channel: the number of samples the DAQ acquires at a time. Necessary because
             of the structure of the nidaqmx librairy. Default set at 10000
     """
-    def __init__(self, gold_channel: str, source_channel: str, samples_by_second: int = 10000, export_target: str = r"acquisition_data.csv", number_of_samples_per_channel: int = 10000):
+    def __init__(self, gold_channel: str, source_channel: str, samples_by_second: int = 10000, export_target: str = r"acquisition_data.csv", number_of_samples_per_channel: int = 1000):
         self.gold_channel = gold_channel  # Channel lié à la résistance connue
         self.source_channel = source_channel  # Channel lié à la résistance inconnue
         self.number_of_samples_per_channel = number_of_samples_per_channel  # nombre de points pris par mesures
