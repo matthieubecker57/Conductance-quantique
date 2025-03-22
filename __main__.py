@@ -15,7 +15,7 @@ NImyDAQ_caracteristics = {
 
 
 """
-Aquire voltage across gold wire and source channel.
+Aquires voltage across gold wire and source channel.
 
 Arguments:
     - gold_channel: the voltage across the gold wire
@@ -39,7 +39,10 @@ Creating a histogram to better visualise the data
 
 data_file = pd.read_csv(r"acquisition_data.csv")
 
-H = Histogram(data=data_file['Voltage_wire'], bin_width=(NImyDAQ_caracteristics["Range width"] / 2**NImyDAQ_caracteristics["Number of bits"]))
+H = Histogram(
+    data=data_file['Voltage_wire'],
+    bin_width=(4*NImyDAQ_caracteristics["Range width"] / 2**NImyDAQ_caracteristics["Number of bits"])
+)
 
 H.create_histogram()
 H.graph_histogram(

@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
-from Histogram import Histogram
+# from Histogram import Histogram
 
 class MathCore:
+    """
+    This class is responsible for all the mathematical computations needed for the project
+    """
     def __init__(self):
         pass
     
@@ -19,7 +22,12 @@ class MathCore:
             return (1/resistance) * voltage / (source_voltage - voltage)
 
 
-
+    def compute_mean_and_std(self, data):
+        mean = np.mean(data)
+        std = np.std(data, ddof=1)  # ddof = 1 correspond to the 'sample std' given by (sum(a_i - a_mean)^2 / (N-1))^(1/2)
+        return mean, std
+    
+    
 
 # data_file = pd.read_csv(r"acquisition_data.csv")
 # voltage_wire_list = np.array(data_file['Voltage_wire'])
