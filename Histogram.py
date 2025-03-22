@@ -1,63 +1,86 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-
-NImyDAQ_caracteristics = {
-    "Range width": 4,
-    "Number of bits": 16
-}
+import pandas as pd
 
 class Histogram:
-    def __init__(self, data_file: str = r"acquisition_data.csv", DAQ_caracteristics: dict = NImyDAQ_caracteristics):
-        self.data_file = pd.read_csv(data_file)
-        self.voltage_wire_list = np.array(self.data_file['Voltage_wire'])
-        self.votlage_source_list = np.array(self.data_file['Votlage_source'])
+    """
+    This is a class whose purpose is to make a histogram of a data set.
 
-        self.caracteristics = DAQ_caracteristics
-        assert "Range width" in self.caracteristics.keys(), "Value Error: DAQ_caracteristics argument does not have required elements"
-        assert "Number of bits" in self.caracteristics.keys(), "Value Error: DAQ_caracteristics argument does not have required elements"
+    Arguments:
+        - data: the data set. It must consist of a 1d array
+        - bin_width: the width of each bin of the data set
+    """
 
-        self.bin_width = self.compute_DAQ_resolution()
+    def __init__(self, data, bin_width: float):
+        self.data = np.array(data)
 
-        self.number_of_bins = int(self.caracteristics["Range width"] / self.bin_width) + 1
+        self.bin_width = bin_width
+        self.data_min = min(self.data)
+        self.data_max = max(self.data)
 
-        self.wire_max = max(self.voltage_wire_list)
-        self.wire_min = min(self.voltage_wire_list)
-        print('extremums:', self.wire_min, self.wire_max)
+        number_of_bins_unrounded = (self.data_max - self.data_min) / self.bin_width
+        self.number_of_bins = int(number_of_bins_unrounded - number_of_bins_unrounded%1 + 1)
+        print("Update: histogram initialising done")
 
-    def compute_DAQ_resolution(self):
-        return self.caracteristics["Range width"] / (2**self.caracteristics["Number of bits"])
+    def bin_data(self):
+        """
+            Uses division with remainder to bin the data points. The number associatied with each
+        data point ranges from 0 to number_of_bins*bin_width
+        """
 
-    def bin_to(self, value):
-        value -= self.wire_min
-        return int(value / self.bin_width - (value % self.bin_width)/self.bin_width)
+        self.bin_etiquets = (self.data - self.data_min)/self.bin_width - ((self.data - self.data_min) % self.bin_width) / self.bin_width
+        self.bin_etiquets = self.bin_etiquets.astype(int)  # converts type of elements of the array from float to int
+        print("Update: data is binned")
+        # print(self.bin_etiquets)
 
     def create_histogram(self):
-        self.wire_histogram = {}
+        """
+        Zips trough the data and the associated bin numbers. Computes the number of data point in each bin and it's average.
+        Created a dictionnary containing this information. The key to each value is "bin" + {number of the bin}
+        """
 
-        for i in range(self.number_of_bins):
-            self.wire_histogram[f"bin{i}"] = {"count": 0, "average": 0}
+        self.bin_data()
 
-        for value in self.voltage_wire_list:
-            bin_number = self.bin_to(value)
+        self.histogram = {}
 
-            if value == self.wire_max:
-                bin_number = self.bin_to(value - self.bin_width*10**(-10))
+        for i in self.bin_etiquets:  # the +1 is to accomodate some edge cases of the binning method
+            self.histogram[f"bin{i}"] = {"count": 0, "average": 0}
 
-            previous_count = self.wire_histogram[f'bin{bin_number}']['count']
-            self.wire_histogram[f'bin{bin_number}']['count'] += 1
+        for n, value in zip(self.bin_etiquets, self.data):
+            previous_count = self.histogram[f'bin{n}']['count']
+            previous_average = self.histogram[f'bin{n}']['average'] 
 
-            previous_average = self.wire_histogram[f'bin{bin_number}']['average'] 
-            self.wire_histogram[f'bin{bin_number}']['average'] = (previous_count*previous_average + value)/(previous_count+1)
+            self.histogram[f'bin{n}']['count'] += 1
+            self.histogram[f'bin{n}']['average'] = (previous_count*previous_average + value)/(previous_count+1)
+        
+        print("Update: histogram done")
+        # print (self.histogram)
+    
+    def graph_histogram(self, title:str, ylabel:str, xlabel:str,
+                        markersize:str = 1, marker:str = 'o', color:str = 'black',
+                        log:bool = False,
+                        isylim:bool = False, ylim:tuple = (0,0),
+                        isxlim:bool = False, xlim:tuple = (0,0)):
+        """
+        Streamlines the use of matplotlib for the histogram. Allows for linear and logarithmic scales on the y axis, as
+        well as limits on the x and y scales.
+        """
 
-    def graph_histogram(self):
-        y_range = [i['count'] for i in self.wire_histogram.values()]
-        x_range = [i['average'] for i in self.wire_histogram.values()]
-        plt.plot(x_range, y_range, 'o', markersize=0.1)
-        plt.ylim(0,50)
+        y_range = [i['count'] for i in self.histogram.values()]
+        x_range = [i['average'] for i in self.histogram.values()]
+
+        if log:
+            plt.semilogy(x_range, y_range, marker, color=color, markersize=markersize)
+        else:
+            plt.plot(x_range, y_range, marker, color=color, markersize=markersize)
+
+        if isylim:
+            plt.ylim(ylim)
+        if isxlim:
+            plt.xlim(xlim)
+
+        plt.title(title)
+        plt.ylabel(ylabel)
+        plt.xlabel(xlabel)
+
         plt.show()
-
-histo = Histogram()
-histo.create_histogram()
-histo.graph_histogram()
-plt.show()
