@@ -1,31 +1,27 @@
 import numpy as np
 import pandas as pd
-# from Histogram import Histogram
+from Graphics import Graphics
+from scipy.constants import Planck, elementary_charge
 
-class MathCore:
+conductance_quanta = 2*elementary_charge**2 / Planck
+
+def compute_conductance(self, voltage, source_voltage, resistance = 1, gold_wire:bool = True):
     """
-    This class is responsible for all the mathematical computations needed for the project
+    This method computes the conductance.
+    If gold_wire == True, then voltage is interpreted as having been taken across the gold wire.
+    If gold_wire == False, then voltage is interpreted as having been taken across the resistor.
     """
-    def __init__(self):
-        pass
-    
-    def compute_conductance(self, voltage, source_voltage, resistance = 1, gold_wire:bool = True):
-        """
-        This method computes the conductance.
-        If gold_wire == True, then voltage is interpreted as having been taken across the gold wire.
-        If gold_wire == False, then voltage is interpreted as having been taken across the resistor.
-        """
 
-        if gold_wire:
-            return (1/resistance) * (source_voltage - voltage) / voltage
-        else:
-            return (1/resistance) * voltage / (source_voltage - voltage)
+    if gold_wire:
+        return (1/resistance) * (source_voltage - voltage) / voltage
+    else:
+        return (1/resistance) * voltage / (source_voltage - voltage)
 
 
-    def compute_mean_and_std(self, data):
-        mean = np.mean(data)
-        std = np.std(data, ddof=1)  # ddof = 1 correspond to the 'sample std' given by (sum(a_i - a_mean)^2 / (N-1))^(1/2)
-        return mean, std
+def compute_mean_and_std(self, data):
+    mean = np.mean(data)
+    std = np.std(data, ddof=1)  # ddof = 1 correspond to the 'sample std' given by (sum(a_i - a_mean)^2 / (N-1))^(1/2)
+    return mean, std
     
     
 
@@ -50,6 +46,6 @@ class MathCore:
 #     xlabel="value",
 #     color="blue",
 #     markersize=1,
-#     isylim=True, ylim=(0,1000),
-#     isxlim=True, xlim=(0,5)
+#     # isylim=True, ylim=(0,1000),
+#     isxlim=True, xlim=(0,50000)
 # )
