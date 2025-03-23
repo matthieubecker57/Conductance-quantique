@@ -17,7 +17,7 @@ Ceci est vraiment très brouillon, désolé ... C'est un test plus qu'autre chos
 Import data
 """
 
-df = pd.read_csv(r"C:\Users\adamz\OneDrive\École\Poly\Métrologie\Code_final\acquisition_data.csv")
+df = pd.read_csv(r"acquisition_data.csv")
 voltage = np.array(df["Voltage_wire"])
 
 """
@@ -93,7 +93,7 @@ for i in plateau_start_index_list:
     add = list(voltage[i:i+lenght_of_plateau])
     all_plateaus += add
 
-conductance = -1* mc.compute_conductance(voltage=np.array(all_plateaus), source_voltage=2, resistance=100) 
+conductance = -1*mc.compute_conductance(voltage=np.array(all_plateaus), source_voltage=2, resistance=100) 
 
 for i in range(len(conductance)):
     if conductance[i] < 0:
