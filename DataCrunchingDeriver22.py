@@ -95,7 +95,7 @@ for idx, (s, e, avg, t_start, t_end) in enumerate(plateaus, 1):
 # --------------------------
 plt.figure(figsize=(10, 6))
 for idx, (s, e, avg, t_start, t_end) in enumerate(plateaus, 1):
-    if avg < -1:  # Condition : moyenne du plateau < -1 V
+    # if avg < -1:  # Condition : moyenne du plateau < -1 V
         plateau_time = t[s:e+1]
         plateau_voltage = voltage[s:e+1]
         plt.plot(plateau_time, plateau_voltage, label=f"Plateau {idx}")
