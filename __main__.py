@@ -1,5 +1,6 @@
 from Acquisition import Acquisition
 from Graphics import Graphics
+from MathCore import compute_conductance
 import pandas as pd
 
 """
@@ -51,20 +52,50 @@ Create a histogram to better visualise the data
 
 data_file = pd.read_csv(r"acquisition_data.csv")
 
-H = Graphics(
+
+"""
+Histogram of the voltage. V will be the instance of the Graphics class that will compute graphics with voltage
+"""
+
+V = Graphics(
     data=data_file['Voltage_wire'],
 )
 
-print(min(H.data), max(H.data))
+V.create_histogram(
+    bin_width=3.24*10**(-4)
+)
 
-# H.create_histogram(
-#     bin_width=(4*Range_width / 2**Number_of_bits)
-# )
+V.graph_histogram(
+    title="Histogram de la tension",
+    ylabel="count (log)",
+    xlabel="value",
+    log=True
+)
 
-# H.graph_histogram(
-#     title="Histogram de la tension",
-#     ylabel="count (log)",
-#     xlabel="value",
-#     log=True
-# )
+"""
+Histogram of the conductance. C will be the instance of the Graphics class that will compute graphics with conductance
+"""
 
+C = Graphics(
+    data=compute_conductance(
+        source_voltage=1,
+        voltage=data_file['Voltage_wire'],
+        resistance=10000
+    )
+)
+
+C.create_histogram(
+    bin_width=compute_conductance(
+        source_voltage=1,
+        voltage=0.01,
+        resistance=10000
+    )
+)
+
+C.graph_histogram(
+    title="Histogram de la tension",
+    ylabel="count (log)",
+    xlabel="value",
+    markersize=5,
+    log=False
+)
