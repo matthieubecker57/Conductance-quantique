@@ -55,14 +55,16 @@ H = Graphics(
     data=data_file['Voltage_wire'],
 )
 
-H.create_histogram(
-    bin_width=(4*Range_width / 2**Number_of_bits)
-)
+print(min(H.data), max(H.data))
 
-H.graph_histogram(
-    title="Histogram de la tension",
-    ylabel="count (log)",
-    xlabel="value",
-    log=True
-)
+# H.create_histogram(
+#     bin_width=(4*Range_width / 2**Number_of_bits)
+# )
+
+# H.graph_histogram(
+#     title="Histogram de la tension",
+#     ylabel="count (log)",
+#     xlabel="value",
+#     log=True
+# )
 
