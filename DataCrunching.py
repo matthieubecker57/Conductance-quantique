@@ -24,7 +24,7 @@ voltage = np.array(df["Voltage_wire"])
 Declare plateau caracteristics
 """
 
-lenght_of_plateau = 5
+lenght_of_plateau = 10
 tolerance = 4 / 2**16  # Tolerance for voltage variation on a plateau. Is the resolution of the DAQ
 dtolerance = 4*4 / 2**16  # Tolerance for slope variation between two points on a plateau. Completly arbitrary
 
@@ -117,5 +117,6 @@ histo.regular_plot(
     x_range=[i for i in range(len(histo.data))],
     title='',
     ylabel='index',
-    xlabel='conductance (a.u.)'
+    xlabel='conductance (a.u.)',
+    # log=True
 )

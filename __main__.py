@@ -9,7 +9,8 @@ Declaring general variables
 """
 
 """ NImyDAQ_caracteristics:
-Range width corresponds to the analog input range used. The NimyDAQ has either +- 2V or +- 10V, corresponding with a width of 4 or 20 V, respectively.
+Range width corresponds to the analog input range used. The NimyDAQ has either +- 2V or +- 10V,
+    corresponding with a width of 4 or 20 V, respectively.
 Number of bits is given by the manifacturer
 """
 Range_width = 4,
