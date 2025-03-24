@@ -4,11 +4,51 @@ import matplotlib.pyplot as plt
 import MathCore as mc
 from Graphics import Graphics
 
+
 """
 Ce code combine deux approches :
 1. Détection des plateaux dans le signal de tension, en utilisant un lissage par moyenne glissante et un seuil adaptatif basé sur l'écart-type de la dérivée.
 2. Calcul de la conductance à partir des valeurs de tension mesurées sur ces plateaux via la fonction compute_conductance (en passant None pour le paramètre self) et affichage de l'histogramme et d'un graphique linéaire.
 """
+
+# --------------------------------------------------
+# Fonctions pour calculer la moyenne et l'écart type à partir d'un histogramme
+# --------------------------------------------------
+def compute_histogram_mean(bin_edges, counts):
+    """
+    Calcule la moyenne pondérée à partir d'un histogramme.
+    
+    Parameters:
+        bin_edges: array-like, les bornes des bins (de longueur n+1)
+        counts: array-like, le nombre d'occurrences dans chaque bin (de longueur n)
+        
+    Returns:
+        La moyenne calculée.
+    """
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    total_counts = counts.sum()
+    if total_counts == 0:
+        return None
+    return (bin_centers * counts).sum() / total_counts
+
+def compute_histogram_std(bin_edges, counts):
+    """
+    Calcule l'écart type à partir d'un histogramme.
+    
+    Parameters:
+        bin_edges: array-like, les bornes des bins (de longueur n+1)
+        counts: array-like, le nombre d'occurrences dans chaque bin (de longueur n)
+        
+    Returns:
+        L'écart type calculé.
+    """
+    mean = compute_histogram_mean(bin_edges, counts)
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    total_counts = counts.sum()
+    if total_counts == 0:
+        return None
+    variance = ((counts * (bin_centers - mean) ** 2).sum()) / total_counts
+    return np.sqrt(variance)
 
 # =======================================================
 # 1. Import des données
@@ -19,7 +59,7 @@ voltage = df["Voltage_wire"].values
 # =======================================================
 # 2. Lissage du signal et création du vecteur temps
 # =======================================================
-window_size = 10  # Taille de la fenêtre pour la moyenne glissante
+window_size = 1  # Taille de la fenêtre pour la moyenne glissante (modifiez pour plus de précision)
 voltage_smoothed = np.convolve(voltage, np.ones(window_size) / window_size, mode='same')
 
 time_resolution = 10e-9  # 10 ns
@@ -71,17 +111,37 @@ for idx, (s, e, avg, t_start, t_end) in enumerate(plateaus, 1):
     duration = t_end - t_start
     print(f"Plateau {idx} : indices {s} à {e}, moyenne = {avg:.3f} V, durée = {duration:.6f} s")
 
-# Optionnel : tracé des plateaux dont la moyenne < -1 V
+# =======================================================
+# Export des informations sur les plateaux en CSV
+# =======================================================
+plateaus_data = []
+for idx, (s, e, avg, t_start, t_end) in enumerate(plateaus, 1):
+    if avg > 0.9:
+        plateaus_data.append({
+            "Plateau": idx,
+            "start_index": s,
+            "end_index": e,
+            "avg_voltage": avg,
+            "start_time": t_start,
+            "end_time": t_end,
+            "duration_s": t_end - t_start
+        })
+df_plateaus = pd.DataFrame(plateaus_data)
+df_plateaus.to_csv("plateau_averages.csv", index=False)
+print("Les moyennes des plateaux ont été exportées dans 'plateau_averages.csv'.")
+
+# =======================================================
+# Optionnel : tracé des plateaux détectés
+# =======================================================
 plt.figure(figsize=(10, 6))
 for idx, (s, e, avg, t_start, t_end) in enumerate(plateaus, 1):
-    if avg < -1:
+    if avg > 0.9:
         plateau_time = t[s:e+1]
         plateau_voltage = voltage[s:e+1]
         plt.plot(plateau_time, plateau_voltage, label=f"Plateau {idx}")
 plt.xlabel("Temps (s)")
 plt.ylabel("Tension (V)")
-plt.title("Plateaux détectés (moyenne < -1V)")
-plt.legend()
+plt.title("Plateaux détectés")
 plt.show()
 
 # =======================================================
@@ -89,7 +149,6 @@ plt.show()
 # =======================================================
 all_plateaus = []
 for s, e, avg, t_start, t_end in plateaus:
-    # Ici on extrait l'intégralité du segment correspondant au plateau
     all_plateaus.extend(voltage[s:e+1])
 all_plateaus = np.array(all_plateaus)
 
@@ -102,7 +161,7 @@ conductance = -1 * mc.compute_conductance(
     None,
     voltage=all_plateaus,
     source_voltage=2,
-    resistance=100
+    resistance=20000,
 )
 # On s'assure que la conductance soit positive
 conductance = np.abs(conductance)
@@ -128,3 +187,33 @@ histo.regular_plot(
     ylabel="Index",
     xlabel="Conductance (a.u.)"
 )
+plt.show()
+
+# =======================================================
+# 8. Visualisation en histogramme des voltages moyens à partir de plateau_averages.csv
+# =======================================================
+
+df_plateaus = pd.read_csv("plateau_averages.csv")
+data = df_plateaus["avg_voltage"]
+
+# --------------------------------------------------
+# Calcul de l'histogramme avec bins automatiques
+# --------------------------------------------------
+counts, bin_edges = np.histogram(data, bins='auto')
+
+# Calcul de la moyenne et de l'écart type à partir de l'histogramme
+mean_hist = compute_histogram_mean(bin_edges, counts)
+std_hist = compute_histogram_std(bin_edges, counts)
+
+print("Moyenne (histogramme) :", mean_hist)
+print("Écart type (histogramme) :", std_hist)
+
+# --------------------------------------------------
+# Tracé de l'histogramme avec affichage de la moyenne et des bornes moyenne ± écart type
+# --------------------------------------------------
+plt.figure(figsize=(10, 6))
+plt.hist(data, bins='auto', edgecolor='black', label="Voltage moyen")
+plt.xlabel("Voltage moyen (V)")
+plt.ylabel("Nombre de plateaux")
+plt.legend()
+plt.show()
