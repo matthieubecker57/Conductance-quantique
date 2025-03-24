@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Chargement des données depuis le fichier CSV
-df = pd.read_csv(r"C:\Users\adamz\OneDrive\École\Poly\Métrologie\Code_final\acquisition_data.csv")
+df = pd.read_csv(r"acquisition_data.csv")
 voltage = df["Voltage_wire"].values
 
 # Création d'un vecteur temps
