@@ -236,71 +236,91 @@ plt.xlabel("Voltage moyen (V)")
 plt.ylabel("Nombre de plateaux")
 plt.legend()
 plt.show()
+
 # =======================================================
-# 2. Calcul de la conductance et association de n pour chaque plateau
+# 5. Calcul de la conductance pour chaque plateau et assignation d'un n
 # =======================================================
-# Paramètres du circuit pour la partie conductance
-V_source = 1        # Tension de la source en volts (pour cette partie)
+# Paramètres pour la partie conductance
+V_source = 1         # Tension de la source (en volts) pour cette partie
 resistance = 100  # Résistance en ohms
 G0 = 2 * elementary_charge**2 / Planck  # Quantum de conductance (S)
+# Initialisation des listes pour stocker les résultats par plateau
+plateau_conductance_list = []  # Liste qui contiendra la conductance moyenne calculée pour chaque plateau
+n_candidate_list = []          # Liste qui contiendra le nombre de canaux estimé (n_candidate) pour chaque plateau
+interesting_list = []          # Liste indiquant si le plateau est intéressant (erreur relative < 10%)
+R_unknown_list = []            # Liste qui contiendra la résistance inconnue calculée pour chaque plateau
 
-# Pour chaque plateau (déjà détecté et vérifié par la condition avg < 0.9),
-# on calcule la conductance moyenne, on estime le nombre de canaux (n_candidate),
-# et on détermine si le plateau est "intéressant" lorsque le ratio G_avg/(n_candidate*G0) > 0.9.
-plateau_conductance_list = []
-n_candidate_list = []
-interesting_list = []
-R_unknown_list = []
-
+# Boucle sur chaque plateau détecté (la variable 'plateaus' est une liste de tuples)
+# Chaque tuple contient : (start_index, end_index, avg_voltage, t_start, t_end)
 for idx, (s, e, avg_voltage, t_start, t_end) in enumerate(plateaus, 1):
-    if avg_voltage < 0.9:
+    
+    # On ne traite que les plateaux dont la tension moyenne dépasse 0.9 V
+    # (Attention : la condition dépend de votre montage, ici on considère avg_voltage > 0.9)
+    if avg_voltage > 0.9:
+        
+        # Extraction du segment de tension correspondant au plateau
         voltage_segment = voltage[s:e+1]
-        G_segment = mc.compute_conductance(None,
-                                           voltage=voltage_segment,
-                                           source_voltage=V_source,
-                                           resistance=resistance)
+        
+        # Calcul de la conductance pour le segment en utilisant la fonction compute_conductance du module MathCore.
+        # On passe "None" pour combler le paramètre 'self' car la fonction n'est pas dans une classe exposée.
+        # V_source et resistance sont les paramètres du circuit.
+        G_segment = mc.compute_conductance(
+            None,
+            voltage=voltage_segment,
+            source_voltage=V_source,
+            resistance=resistance
+        )
+        
+        # Calcul de la conductance moyenne sur le plateau en prenant la moyenne des valeurs absolues
         G_avg = np.mean(np.abs(G_segment))
         plateau_conductance_list.append(G_avg)
+        
+        # Estimation du nombre de canaux (n_candidate) en arrondissant G_avg divisé par le quantum de conductance G0
         n_candidate = int(round(G_avg / G0))
+        # Si l'estimation donne moins de 1, on force n_candidate à 1
         if n_candidate < 1:
             n_candidate = 1
         n_candidate_list.append(n_candidate)
-        ratio = G_avg / (n_candidate * G0)
-        interesting = (ratio > 0.9)
+        
+        # Calcul de l'erreur relative entre la conductance moyenne mesurée et la conductance théorique n_candidate * G0
+        error = abs(G_avg - n_candidate * G0) / (n_candidate * G0)
+        # Un plateau est considéré comme intéressant si cette erreur relative est inférieure à 10%
+        interesting = (error < 0.1)
         interesting_list.append(interesting)
-        # Calcul de R_unknown via la loi du diviseur de tension : 
-        # R_unknown = (V_source/|avg_voltage| - 1) / (n_candidate * G0)
+        
+        # Calcul de la résistance inconnue R_unknown à partir de la loi du diviseur de tension :
+        # R_unknown = (V_source / |avg_voltage| - 1) / (n_candidate * G0)
+        # On utilise la valeur absolue de avg_voltage pour éviter les problèmes de signe.
         R_unknown = (V_source / abs(avg_voltage) - 1) / (n_candidate * G0)
         R_unknown_list.append(R_unknown)
 
-# Création d'un DataFrame pour stocker ces résultats
+# Création d'un DataFrame pour regrouper les résultats obtenus pour chaque plateau
+# On filtre pour ne prendre que les plateaux dont avg_voltage > 0.9 (condition utilisée dans la boucle)
 df_conductance = pd.DataFrame({
     "Plateau": range(1, len(plateau_conductance_list) + 1),
-    "avg_voltage": [p[2] for p in plateaus if p[2] < 0.9],
+    "avg_voltage": [p[2] for p in plateaus if p[2] > 0.9],
     "G_avg": plateau_conductance_list,
     "n_candidate": n_candidate_list,
     "interesting": interesting_list,
     "R_unknown": R_unknown_list
 })
-print(df_conductance)
-df_conductance.to_csv("plateau_averages_with_conductance.csv", index=False)
 
+# Affichage du DataFrame dans la console
+print(df_conductance)
+
+# Export des résultats dans un fichier CSV
+df_conductance.to_csv("plateau_averages_with_conductance.csv", index=False)
 # =======================================================
-# 3. Visualisation de la conductance avec lignes théoriques pour chaque n
+# 6. Visualisation de la conductance par plateau avec niveaux théoriques (n·G₀)
 # =======================================================
 plt.figure(figsize=(12, 8))
 max_n = max(n_candidate_list)
-# Tracer des lignes horizontales pour chaque niveau théorique de conductance (n * G0)
-for n in range(1, max_n + 1):
-    plt.axhline(y=n * G0, color='gray', linestyle='--', linewidth=1,
-                label=f"n = {n}" if n == 1 else None)
-# Pour chaque plateau, tracer un point à l'abscisse correspondant au numéro de plateau et à l'ordonnée la conductance moyenne
+# Tracer les points pour chaque plateau
 for idx, row in df_conductance.iterrows():
     color = 'red' if row["interesting"] else 'blue'
     plt.plot(row["Plateau"], row["G_avg"], 'o', color=color, markersize=10,
              label="Plateau intéressant" if row["interesting"] and idx == 0 else None)
     plt.text(row["Plateau"], row["G_avg"], f" n={row['n_candidate']}", fontsize=9, color=color)
-
 plt.xlabel("Plateau")
 plt.ylabel("Conductance moyenne (S)")
 plt.title("Conductance par plateau avec niveaux théoriques (n·G₀)")
@@ -309,7 +329,7 @@ plt.grid(True)
 plt.show()
 
 # =======================================================
-# 4. Histogramme des résistances inconnues
+# 7. Histogramme des résistances inconnues
 # =======================================================
 plt.figure(figsize=(10, 6))
 plt.hist(df_conductance["R_unknown"], bins='auto', edgecolor='black')
