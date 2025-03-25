@@ -170,7 +170,7 @@ plt.show()
 # =======================================================
 all_plateaus = []
 for s, e, avg, t_start, t_end in plateaus:
-    # if avg < 0.9:
+    # if avg > 0.9:
         all_plateaus.extend(voltage[s:e+1])
 all_plateaus = np.array(all_plateaus)
 
@@ -259,7 +259,8 @@ G0 = 2 * elementary_charge**2 / Planck  # Quantum de conductance (S)
 plateau_conductance_list = []  # Liste qui contiendra la conductance moyenne calculée pour chaque plateau
 n_candidate_list = []          # Liste qui contiendra le nombre de canaux estimé (n_candidate) pour chaque plateau
 interesting_list = []          # Liste indiquant si le plateau est intéressant (erreur relative < 10%)
-R_unknown_list = []            # Liste qui contiendra la résistance inconnue calculée pour chaque plateau
+R_unknown_list = []  
+error_list = []          # Liste qui contiendra la résistance inconnue calculée pour chaque plateau
 
 # Boucle sur chaque plateau détecté (la variable 'plateaus' est une liste de tuples)
 # Chaque tuple contient : (start_index, end_index, avg_voltage, t_start, t_end)
@@ -295,6 +296,7 @@ for idx, (s, e, avg_voltage, t_start, t_end) in enumerate(plateaus, 1):
         
         # Calcul de l'erreur relative entre la conductance moyenne mesurée et la conductance théorique n_candidate * G0
         error = abs(G_avg - n_candidate * G0) / (n_candidate * G0)
+        error_list.append(error)
         # Un plateau est considéré comme intéressant si cette erreur relative est inférieure à 10%
         interesting = (error < 0.1)
         interesting_list.append(interesting)
@@ -349,8 +351,12 @@ plt.ylabel("Nombre de plateaux")
 plt.title("Histogramme des résistances inconnues par plateau")
 plt.show()
 
+# Calcul de la moyenne et de l'écart type de l'erreur relative
+mean_errorRes = np.mean(df_conductance['R_unknown'])
+std_errorRes = np.std(df_conductance['R_unknown'], ddof=1)
 
-
+print(mean_errorRes)
+print(std_errorRes)
 # # =======================================================
 # # 7b. Vérification et quantification du décalage linéaire
 # # =======================================================
@@ -394,44 +400,6 @@ plt.show()
 #    - n_candidate est l'estimation du nombre de canaux (arrondi de G_avg / G0),
 #    - G0 est le quantum de conductance (défini précédemment).
 # Cette erreur indique l'écart entre la valeur mesurée et la valeur théorique attendue pour n canaux.
-#
-# Nous allons calculer cette erreur pour chaque plateau retenu et tracer un histogramme.
-
-error_list = []      # Liste pour stocker l'erreur relative pour chaque plateau retenu
-plateau_indices = [] # Liste pour stocker l'indice (numéro) de chaque plateau
-
-# On parcourt la liste "plateaus" qui a été créée lors de la détection.
-# Chaque élément de "plateaus" est un tuple : (start_index, end_index, avg_voltage, t_start, t_end)
-for idx, (s, e, avg_voltage, t_start, t_end) in enumerate(plateaus, 1):
-    # On ne traite que les plateaux retenus (ici, ceux dont la moyenne de tension est > 0.9 V)
-    if avg_voltage > 0.9:
-        # Extraction du segment de tension correspondant à ce plateau
-        voltage_segment = voltage[s:e+1]
-        # Calcul de la conductance pour ce segment via la fonction compute_conductance de MathCore.
-        # On passe "None" pour le paramètre 'self', et on utilise les paramètres du circuit (V_source et resistance).
-        G_segment = mc.compute_conductance(
-            None,
-            voltage=voltage_segment,
-            source_voltage=V_source,
-            resistance=resistance
-        )
-        # Calcul de la conductance moyenne sur le plateau en prenant la moyenne des valeurs absolues
-        G_avg = np.mean(np.abs(G_segment))
-        
-        # Estimation du nombre de canaux (n_candidate) en arrondissant G_avg / G0
-        n_candidate = int(round(G_avg / G0))
-        # On force n_candidate à 1 si l'arrondi donne moins de 1 (pour éviter des valeurs non physiques)
-        if n_candidate < 1:
-            n_candidate = 1
-        
-        # Calcul de l'erreur relative :
-        # C'est la différence absolue entre la conductance mesurée (G_avg) et la valeur théorique (n_candidate * G0),
-        # normalisée par la valeur théorique.
-        error = abs(G_avg - n_candidate * G0) / (n_candidate * G0)
-        
-        # Stockage de l'erreur et de l'indice du plateau
-        error_list.append(error)
-        plateau_indices.append(idx)
 
 
 # Affichage du nombre de plateaux retenus
@@ -466,4 +434,33 @@ plt.show()
 # sns.boxplot(y=error_list, color="lightgreen")
 # plt.ylabel("Erreur relative")
 # plt.title("Boxplot de l'erreur relative")
-# plt.show()
+# plt.show(
+
+
+# --- Filtrage des plateaux acceptables pour le calcul de R_unknown ---
+# On sélectionne les lignes de df_conductance où "interesting" est True
+df_conductance_interesting = df_conductance[df_conductance["interesting"] == True]
+print("Nombre de plateaux acceptables :", len(df_conductance_interesting))
+
+# --- Retracer les plateaux acceptables à partir des index contenus dans df_plateaus ---
+plt.figure(figsize=(12, 8))
+# On parcourt chaque plateau intéressant
+for _, row in df_conductance_interesting.iterrows():
+    plateau_num = int(row["Plateau"])
+    # On cherche la correspondance dans df_plateaus (les deux DataFrames doivent partager le même numéro de plateau)
+    plateau_info = df_plateaus[df_plateaus["Plateau"] == plateau_num]
+    if plateau_info.empty:
+        continue  # Si aucune correspondance n'est trouvée, on passe au suivant
+    # Extraction des indices de début et de fin du plateau
+    s = int(plateau_info["start_index"].values[0])
+    e = int(plateau_info["end_index"].values[0])
+    # Extraction du segment correspondant du signal original
+    plateau_time = t[s:e+1]
+    plateau_voltage = voltage[s:e+1]
+    # Tracé du plateau
+    plt.plot(plateau_time, plateau_voltage, label=f"Plateau {plateau_num}")
+
+plt.xlabel("Temps (s)")
+plt.ylabel("Tension (V)")
+plt.title("Retracé des plateaux acceptables pour le calcul de R_unknown")
+plt.show()
