@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import MathCore as mc
 from Graphics import Graphics
 from scipy.constants import Planck, elementary_charge
+import seaborn as sns  # On utilisera seaborn pour tracer la courbe de densité et le boxplot
+
 
 
 """
@@ -237,6 +239,15 @@ plt.ylabel("Nombre de plateaux")
 plt.legend()
 plt.show()
 
+
+
+plt.figure(figsize=(10, 6))
+sns.histplot(data, bins='auto', edgecolor='black', kde = True, label="Voltage moyen")
+plt.xlabel("Voltage moyen (V)")
+plt.ylabel("Nombre de plateaux")
+plt.legend()
+plt.show()
+
 # =======================================================
 # 5. Calcul de la conductance pour chaque plateau et assignation d'un n
 # =======================================================
@@ -332,8 +343,127 @@ plt.show()
 # 7. Histogramme des résistances inconnues
 # =======================================================
 plt.figure(figsize=(10, 6))
-plt.hist(df_conductance["R_unknown"], bins='auto', edgecolor='black')
+sns.histplot(df_conductance["R_unknown"], bins='auto',kde=True, edgecolor='black')
 plt.xlabel("Résistance inconnue (Ω)")
 plt.ylabel("Nombre de plateaux")
 plt.title("Histogramme des résistances inconnues par plateau")
 plt.show()
+
+
+
+# # =======================================================
+# # 7b. Vérification et quantification du décalage linéaire
+# # =======================================================
+# # Calcul du décalage pour chaque plateau : différence entre G_avg mesurée et la valeur théorique n_candidate*G₀
+# df_conductance["deviation"] = df_conductance["G_avg"] - df_conductance["n_candidate"] * G0
+
+# # On effectue une régression linéaire de ce décalage en fonction de n_candidate
+# x = df_conductance["n_candidate"].values  # Nombre de canaux estimé
+# y = df_conductance["deviation"].values      # Décalage mesuré
+
+# # Calcul de la régression linéaire (p[0] est la pente, p[1] l'intercept)
+# p = np.polyfit(x, y, 1)
+# y_fit = np.polyval(p, x)
+
+# # Calcul du coefficient de détermination R²
+# r2 = 1 - np.sum((y - y_fit)**2) / np.sum((y - np.mean(y))**2)
+
+# print("Régression linéaire du décalage:")
+# print("Pente =", p[0])
+# print("Intercept =", p[1])
+# print("Coefficient de détermination R² =", r2)
+
+# # Tracé du décalage et de la régression linéaire
+# plt.figure(figsize=(10, 6))
+# plt.plot(x, y, 'o', label="Décalages mesurés")
+# plt.plot(x, y_fit, 'r-', label=f"Régression linéaire\ndéviation = {p[0]:.3e} * n + {p[1]:.3e}\nR² = {r2:.3f}")
+# plt.xlabel("Nombre de canaux estimé (n)")
+# plt.ylabel("Décalage (G_avg - n·G₀) (S)")
+# plt.title("Quantification du décalage linéaire")
+# plt.legend()
+# plt.grid(True)
+# plt.show()
+
+# =======================================================
+# 8. Visualisation de l'erreur relative pour les plateaux retenus
+# =======================================================
+# On définit l'erreur relative pour un plateau comme :
+#    error = |G_avg - n_candidate * G0| / (n_candidate * G0)
+# où :
+#    - G_avg est la conductance moyenne mesurée sur le plateau,
+#    - n_candidate est l'estimation du nombre de canaux (arrondi de G_avg / G0),
+#    - G0 est le quantum de conductance (défini précédemment).
+# Cette erreur indique l'écart entre la valeur mesurée et la valeur théorique attendue pour n canaux.
+#
+# Nous allons calculer cette erreur pour chaque plateau retenu et tracer un histogramme.
+
+error_list = []      # Liste pour stocker l'erreur relative pour chaque plateau retenu
+plateau_indices = [] # Liste pour stocker l'indice (numéro) de chaque plateau
+
+# On parcourt la liste "plateaus" qui a été créée lors de la détection.
+# Chaque élément de "plateaus" est un tuple : (start_index, end_index, avg_voltage, t_start, t_end)
+for idx, (s, e, avg_voltage, t_start, t_end) in enumerate(plateaus, 1):
+    # On ne traite que les plateaux retenus (ici, ceux dont la moyenne de tension est > 0.9 V)
+    if avg_voltage > 0.9:
+        # Extraction du segment de tension correspondant à ce plateau
+        voltage_segment = voltage[s:e+1]
+        # Calcul de la conductance pour ce segment via la fonction compute_conductance de MathCore.
+        # On passe "None" pour le paramètre 'self', et on utilise les paramètres du circuit (V_source et resistance).
+        G_segment = mc.compute_conductance(
+            None,
+            voltage=voltage_segment,
+            source_voltage=V_source,
+            resistance=resistance
+        )
+        # Calcul de la conductance moyenne sur le plateau en prenant la moyenne des valeurs absolues
+        G_avg = np.mean(np.abs(G_segment))
+        
+        # Estimation du nombre de canaux (n_candidate) en arrondissant G_avg / G0
+        n_candidate = int(round(G_avg / G0))
+        # On force n_candidate à 1 si l'arrondi donne moins de 1 (pour éviter des valeurs non physiques)
+        if n_candidate < 1:
+            n_candidate = 1
+        
+        # Calcul de l'erreur relative :
+        # C'est la différence absolue entre la conductance mesurée (G_avg) et la valeur théorique (n_candidate * G0),
+        # normalisée par la valeur théorique.
+        error = abs(G_avg - n_candidate * G0) / (n_candidate * G0)
+        
+        # Stockage de l'erreur et de l'indice du plateau
+        error_list.append(error)
+        plateau_indices.append(idx)
+
+
+# Affichage du nombre de plateaux retenus
+print("Nombre de plateaux retenus :", len(error_list))
+
+# Calcul de la moyenne et de l'écart type de l'erreur relative
+mean_error = np.mean(error_list)
+std_error = np.std(error_list, ddof=1)
+
+print("Moyenne de l'erreur relative :", mean_error)
+print("Écart type de l'erreur relative :", std_error)
+
+# Histogramme avec un nombre de bins fixé
+plt.figure(figsize=(10, 6))
+plt.hist(error_list, bins=20, edgecolor='black', alpha=0.7, label="Histogramme")
+plt.xlabel("Erreur relative")
+plt.ylabel("Nombre de plateaux")
+plt.title("Histogramme de l'erreur relative (20 bins)")
+plt.legend()
+plt.show()
+
+# Histogramme avec densité de probabilité (KDE)
+plt.figure(figsize=(10, 6))
+sns.histplot(error_list, bins=20, kde=True, color="skyblue")
+plt.xlabel("Erreur relative")
+plt.ylabel("Densité")
+plt.title("Histogramme et KDE de l'erreur relative")
+plt.show()
+
+# # Boxplot de l'erreur relative
+# plt.figure(figsize=(6, 8))
+# sns.boxplot(y=error_list, color="lightgreen")
+# plt.ylabel("Erreur relative")
+# plt.title("Boxplot de l'erreur relative")
+# plt.show()
