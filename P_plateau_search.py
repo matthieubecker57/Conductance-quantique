@@ -16,7 +16,7 @@ Define plateau caracteristics
 points_per_plateau = 5
 
 diff = np.diff(Vwire)
-max_diff = 5*10**(-3)  # The maximum difference between to points before we consider they are not on the same plateau
+max_diff = 1*10**(-2)  # The maximum difference between to points before we consider they are not on the same plateau
 
 """
 Search on plateau and add the points on the plateau to a dictionnary. The key in the dicionnary is the index of the first point
@@ -43,6 +43,17 @@ Print out all the plateaus so that we can can search for it manually trought the
 """
 for index in plateaus.keys():
     print(f"plateaus starts at {index}: \n {plateaus[index]}")
+
+"""
+Plot the plateaus
+"""
+for index in plateaus.keys():
+    indexes = plateaus[index].index.tolist()
+    plt.plot(indexes, [Vwire[index] for index in indexes], 'o', markersize=1),
+
+plt.grid(which='both')
+plt.show()
+
 
 """
 Plots the average voltage found for each plateau

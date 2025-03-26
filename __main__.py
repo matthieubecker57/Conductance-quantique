@@ -55,56 +55,56 @@ data_file = pd.read_csv(r"acquisition_data.csv")
 Histogram of the voltage. V will be the instance of the Graphics class that will compute graphics with voltage
 """
 
-# V = Graphics(
-#     data=data_file['Voltage_wire'],
-# )
+V = Graphics(
+    data=data_file['Voltage_wire'],
+)
 
-# V.create_histogram(
-#     bin_width=3.24*10**(-4)
-# )
+V.create_histogram(
+    bin_width=3.24*10**(-4)
+)
 
-# V.graph_histogram(
-#     title="Histogram de la tension",
-#     ylabel="count (log)",
-#     xlabel="value",
-#     log=True
-# )
+V.graph_histogram(
+    title="Histogram de la tension",
+    ylabel="count (log)",
+    xlabel="value",
+    log=True
+)
 
-# V.regular_plot(
-#     title="Histogram de la tension",
-#     ylabel="count (log)",
-#     xlabel="value",
-#     # log=True
-# )
+V.regular_plot(
+    title="Tension mesuré",
+    ylabel="temps (10 microsecondes)",
+    xlabel="value",
+    # log=True
+)
 
 """
 Histogram of the conductance. C will be the instance of the Graphics class that will compute graphics with conductance
 """
 
-C = Graphics(
-    data=compute_conductance(
-        source_voltage=2.5,
-        voltage=-1*data_file['Voltage_wire'],
-        resistance=20000
-    )
-)
+# C = Graphics(
+#     data=compute_conductance(
+#         source_voltage=2.5,
+#         voltage=-1*data_file['Voltage_wire'],
+#         resistance=20000
+#     )
+# )
 
-C.create_histogram(
-    bin_width=0.001
-)
+# C.create_histogram(
+#     bin_width=0.001
+# )
 
-C.graph_histogram(
-    title="Histogram de la conductance",
-    ylabel="count (log)",
-    xlabel="value",
-    markersize=0.1,
-    log=False
-)
+# C.graph_histogram(
+#     title="Histogram de la conductance",
+#     ylabel="count (log)",
+#     xlabel="value",
+#     markersize=0.1,
+#     log=False
+# )
 
-C.regular_plot(
-    title="Histogram de la conductance",
-    ylabel="count (log)",
-    xlabel="value",
-    markersize=0.1,
-    log=False
-)
+# C.regular_plot(
+#     title="Histogram de la conductance",
+#     ylabel="count (log)",
+#     xlabel="value",
+#     markersize=0.1,
+#     log=False
+# )
