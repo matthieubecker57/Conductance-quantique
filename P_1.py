@@ -26,3 +26,5 @@ if __name__ == "__main__":
     # Une fois le pipeline exécuté, le CSV "Rinconnue_results.csv" est créé.
     # On charge ce CSV et on effectue des calculs supplémentaires.
     df_results = additional_calculations("Rinconnue_results.csv")
+
+    # Vous pouvez continuer à travailler sur les données dans df_results
