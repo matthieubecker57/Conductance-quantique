@@ -59,7 +59,8 @@ class Graphics:
                         markersize:str = 1, marker:str = 'o', color:str = 'black',
                         log:bool = False,
                         isylim:bool = False, ylim:tuple = (0,0),
-                        isxlim:bool = False, xlim:tuple = (0,0)):
+                        isxlim:bool = False, xlim:tuple = (0,0),
+                        grid_on:bool = True, which_grid: str = 'major'):
         """
         Streamlines the use of matplotlib for the histogram. Allows for linear and logarithmic scales on the y axis, as
         well as limits on the x and y scales.
@@ -77,6 +78,9 @@ class Graphics:
             plt.ylim(ylim)
         if isxlim:
             plt.xlim(xlim)
+        
+        if grid_on:
+            plt.grid(which=which_grid)
 
         plt.title(title)
         plt.ylabel(ylabel)
@@ -88,7 +92,8 @@ class Graphics:
                         markersize:str = 1, marker:str = 'o', color:str = 'black',
                         log:bool = False,
                         isylim:bool = False, ylim:tuple = (0,0),
-                        isxlim:bool = False, xlim:tuple = (0,0)):
+                        isxlim:bool = False, xlim:tuple = (0,0),
+                        grid_on:bool = True, which_grid:str = 'major'):
         
         """
         Just like graph_histograms, but directly plots the data
@@ -109,8 +114,12 @@ class Graphics:
         if isxlim:
             plt.xlim(xlim)
 
+        if grid_on:
+            plt.grid(which=which_grid)
+
         plt.title(title)
         plt.ylabel(ylabel)
         plt.xlabel(xlabel)
 
         plt.show()
+

@@ -3,7 +3,7 @@ import pandas as pd
 from Graphics import Graphics
 from scipy.constants import Planck, elementary_charge
 
-conductance_quanta = 2*elementary_charge**2 / Planck
+G0 = 2*elementary_charge**2 / Planck
 
 def compute_conductance(voltage, source_voltage, resistance = 1, gold_wire:bool = True):
     """
