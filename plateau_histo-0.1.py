@@ -182,7 +182,7 @@ all_plateaus = np.array(all_plateaus)
 conductance = -1 * mc.compute_conductance(
     None,
     voltage=all_plateaus,
-    source_voltage=2,
+    source_voltage=1,
     resistance=20000,
 )
 # On s'assure que la conductance soit positive
@@ -215,12 +215,12 @@ plt.show()
 # =======================================================
 
 df_plateaus = pd.read_csv("plateau_averages.csv")
-data = df_plateaus["avg_voltage"]
+data = np.array(df_plateaus["avg_voltage"])
 
 # --------------------------------------------------
 # Calcul de l'histogramme avec bins automatiques
 # --------------------------------------------------
-counts, bin_edges = np.histogram(data, bins='auto')
+counts, bin_edges = np.histogram(mc.compute_conductance(voltage=data,source_voltage=1,resistance=20000), bins='auto')
 
 # Calcul de la moyenne et de l'écart type à partir de l'histogramme
 mean_hist = compute_histogram_mean(bin_edges, counts)
