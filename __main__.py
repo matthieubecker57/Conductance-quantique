@@ -17,8 +17,6 @@ Number of bits is given by the manifacturer
 Range_width = 4
 Number_of_bits = 16
 
-
-
 """
 ----------------------------------------------------------------------------------------------
 Acquiring data

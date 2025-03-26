@@ -70,7 +70,7 @@ df = pd.DataFrame(
 )
 print("Update: data filtered")
 
-df.to_csv(r"P_filtered_data.csv", index=False)
+df.to_csv(r"P_filtered_data.csv", index=False, header=["Voltage_wire"])
 print("Update: filtered data exported")
 
 """
@@ -82,7 +82,7 @@ The red lines are the maximum voltage at which we could expect a plateau
 index_range = [i for i in range(len(filtered_data))]  # indexes to plot the filtered data
 x_range = np.linspace(0,max(index_range),10)  # a range to be able to plot the cutoff values
 
-plt.plot(index_range, filtered_data, 'o', markersize=0.4)
+plt.plot(index_range, filtered_data, 'o', markersize=1)
 for i in range(len(expected_plateau_voltages_max)):
     plt.plot(
         x_range,
