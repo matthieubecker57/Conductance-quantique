@@ -84,7 +84,21 @@ x_range = np.linspace(0,max(index_range),10)  # a range to be able to plot the c
 
 plt.plot(index_range, filtered_data, 'o', markersize=0.4)
 for i in range(len(expected_plateau_voltages_max)):
-    plt.plot(x_range, [expected_plateau_voltages_min[i] for j in x_range], color='gold')  # plotting a line for expected_plateau_voltages_min[i]
-    plt.plot(x_range, [expected_plateau_voltages_max[i] for j in x_range], color='red')  # plotting a line for expected_plateau_voltages_max[i]`
+    plt.plot(
+        x_range,
+        [expected_plateau_voltages_min[i] for j in x_range],
+        color=(255/255, (189 - i*85/5)/255, (136 - i*136/5)/255),  # Changing color tone so we can have a usefull legend
+        label=f"Minimum voltage for n={i+1}"
+    )  # plotting a line for expected_plateau_voltages_min[i]
+    plt.plot(
+        x_range,
+        [expected_plateau_voltages_max[i] for j in x_range],
+        color=((255 - 150*i/5)/255, 0, 0), # Changing color tone so we can have a usefull legend
+        label=f"Maximum voltage for n={i+1}"
+    )  # plotting a line for expected_plateau_voltages_max[i]`
 
+plt.title("Filtered voltage measures, as well as cutoff values for the different plateaus")
+plt.xlabel("Index")
+plt.ylabel("Voltage (V)")
+plt.legend(loc='best')
 plt.show()
