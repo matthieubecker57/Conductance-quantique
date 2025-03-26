@@ -47,10 +47,22 @@ for index in plateaus.keys():
 """
 Plot the plateaus
 """
+
+# If we want to overlap the plateaus to the data
+plt.plot(
+    Vwire.index.to_list(),
+    Vwire,
+    'o',
+    markersize=1,
+    color='black')
+
 for index in plateaus.keys():
     indexes = plateaus[index].index.tolist()
-    plt.plot(indexes, [Vwire[index] for index in indexes], 'o', markersize=1),
+    plt.plot(indexes, [Vwire[index] for index in indexes], 'o', markersize=2),
 
+plt.title("Les différents plateaux identifiés")
+plt.ylabel("Tension (V)")
+plt.xlabel("Temps (10 microsecondes)")
 plt.grid(which='both')
 plt.show()
 
@@ -58,11 +70,17 @@ plt.show()
 """
 Plots the average voltage found for each plateau
 """
+
+
 plateau_values = [np.mean(plateaus[key]) for key in plateaus.keys()]
 plt.plot(
-    [i for i in range(len(plateau_values))],
+    plateaus.keys(),
     plateau_values,
     'o',
-    markersize=1
+    markersize=2
 )
+plt.title("Les valeurs moyennes des divers plateaus identifiés")
+plt.ylabel("Tension (V)")
+plt.xlabel("Temps auquel le premier point sur le plateau a été identifié (10 microsecondes)")
+plt.grid(which='both')
 plt.show()
