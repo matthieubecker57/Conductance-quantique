@@ -33,16 +33,16 @@ Arguments:
     - source_channel: the voltage across the whole circuit (so the output of the source)
 """
 
-# acquisition = Acquisition(
-#     gold_channel = "DAQ_team_3_PHS2903/ai0",  # Across the gold wires
-#     source_channel = "DAQ_team_3_PHS2903/ai1",  # Across the source
-#     samples_by_second = 100000,
-#     # number_of_samples_per_channel = 2,
-#     # export_target = r"acquisition_data.csv"
-# )
+acquisition = Acquisition(
+    gold_channel = "DAQ_team_3_PHS2903/ai0",  # Across the gold wires
+    source_channel = "DAQ_team_3_PHS2903/ai1",  # Across the source
+    samples_by_second = 100000,
+    # number_of_samples_per_channel = 2,
+    # export_target = r"acquisition_data.csv"
+)
 
-# acquisition.continuous_acquisition()
-# acquisition.export_to_csv()
+acquisition.continuous_acquisition()
+acquisition.export_to_csv()
 
 """
 ----------------------------------------------------------------------------------------------
@@ -76,26 +76,22 @@ V.graph_histogram(
 Histogram of the conductance. C will be the instance of the Graphics class that will compute graphics with conductance
 """
 
-C = Graphics(
-    data=compute_conductance(
-        source_voltage=1,
-        voltage=data_file['Voltage_wire'],
-        resistance=10000
-    )
-)
+# C = Graphics(
+#     data=compute_conductance(
+#         source_voltage=1,
+#         voltage=data_file['Voltage_wire'],
+#         resistance=10000
+#     )
+# )
 
-C.create_histogram(
-    bin_width=compute_conductance(
-        source_voltage=1,
-        voltage=0.01,
-        resistance=10000
-    )
-)
+# C.create_histogram(
+#     bin_width=0.001
+# )
 
-C.graph_histogram(
-    title="Histogram de la tension",
-    ylabel="count (log)",
-    xlabel="value",
-    markersize=5,
-    log=False
-)
+# C.graph_histogram(
+#     title="Histogram de la tension",
+#     ylabel="count (log)",
+#     xlabel="value",
+#     markersize=5,
+#     log=False
+# )

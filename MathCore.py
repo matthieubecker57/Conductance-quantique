@@ -18,7 +18,7 @@ def compute_conductance(voltage, source_voltage, resistance = 1, gold_wire:bool 
         return (1/resistance) * voltage / (source_voltage - voltage)
 
 
-def compute_mean_and_std(self, data):
+def compute_mean_and_std(data):
     mean = np.mean(data)
     std = np.std(data, ddof=1)  # ddof = 1 correspond to the 'sample std' given by (sum(a_i - a_mean)^2 / (N-1))^(1/2)
     return mean, std
