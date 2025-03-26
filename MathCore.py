@@ -5,7 +5,7 @@ from scipy.constants import Planck, elementary_charge
 
 conductance_quanta = 2*elementary_charge**2 / Planck
 
-def compute_conductance(self, voltage, source_voltage, resistance = 1, gold_wire:bool = True):
+def compute_conductance(voltage, source_voltage, resistance = 1, gold_wire:bool = True):
     """
     This method computes the conductance.
     If gold_wire == True, then voltage is interpreted as having been taken across the gold wire.

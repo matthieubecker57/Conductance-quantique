@@ -42,7 +42,7 @@ class Graphics:
 
         self.histogram = {}
 
-        for i in self.bin_etiquets:  # the +1 is to accomodate some edge cases of the binning method
+        for i in self.bin_etiquets:
             self.histogram[f"bin{i}"] = {"count": 0, "average": 0}
 
         for n, value in zip(self.bin_etiquets, self.data):
@@ -84,11 +84,21 @@ class Graphics:
 
         plt.show()
     
-    def regular_plot(self, x_range, y_range, title:str, ylabel:str, xlabel:str,
+    def regular_plot(self, title:str, ylabel:str, xlabel:str,
                         markersize:str = 1, marker:str = 'o', color:str = 'black',
                         log:bool = False,
                         isylim:bool = False, ylim:tuple = (0,0),
                         isxlim:bool = False, xlim:tuple = (0,0)):
+        
+        """
+        Just like graph_histograms, but directly plots the data
+        Streamlines the use of matplotlib for the histogram. Allows for linear and logarithmic scales on the y axis, as
+        well as limits on the x and y scales.
+        """
+        
+        x_range = [i for i in range(len(self.data))]
+        y_range = self.data
+                
         if log:
             plt.semilogy(x_range, y_range, marker, color=color, markersize=markersize)
         else:
