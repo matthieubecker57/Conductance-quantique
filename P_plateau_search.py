@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from MathCore import G0
 """
 Define the data to search in
 """
@@ -65,4 +65,81 @@ plt.plot(
     'o',
     markersize=1
 )
+plt.show()
+
+
+# -------------------------------
+# Partie 2 : Balayage de Rres pour déterminer le meilleur ajustement
+# -------------------------------
+
+# Paramètres expérimentaux
+source_voltage = 2.5
+resistance = 20000
+
+def expected_plateau_voltage(n: int, Rres: float, V=source_voltage, R=resistance):
+    """
+    Calcule la tension théorique aux bornes des fils d'or pour un plateau de conductance nG0.
+    """
+    return V / (1 + R / (1/(n*G0) + Rres))
+
+# On définit un ensemble de valeurs candidates pour Rres
+Rres_candidates = np.linspace(0, 600, 61)  # par exemple, de 0 à 600 par pas de 10 ohms
+
+# Pour chaque valeur de Rres candidate, on calcule une erreur globale sur tous les plateaux
+results_Rres = []  # Pour stocker (Rres, erreur_globale)
+for Rres in Rres_candidates:
+    global_error = 0
+    for index_start, plateau_data in plateaus.items():
+        mean_voltage = np.mean(plateau_data)
+        best_error = np.inf
+        # On teste pour n de 1 à 5 (adapter selon vos besoins)
+        for n_candidate in range(1, 6):
+            v_theo = expected_plateau_voltage(n_candidate, Rres)
+            error = abs(mean_voltage - v_theo)
+            if error < best_error:
+                best_error = error
+        global_error += best_error
+    results_Rres.append((Rres, global_error))
+
+# On trouve la valeur de Rres qui minimise l'erreur globale
+best_Rres, best_global_error = min(results_Rres, key=lambda x: x[1])
+print(f"Meilleur Rres : {best_Rres:.1f} ohms avec une erreur globale de {best_global_error:.4f}")
+
+# -------------------------------
+# Partie 3 : Attribution de n pour chaque plateau avec le meilleur Rres
+# -------------------------------
+
+plateau_results = []
+
+for index_start, plateau_data in plateaus.items():
+    mean_voltage = np.mean(plateau_data)
+    best_n = None
+    best_error = np.inf
+    # On teste les valeurs de n de 1 à 5
+    for n_candidate in range(1, 6):
+        v_theo = expected_plateau_voltage(n_candidate, best_Rres)
+        error = abs(mean_voltage - v_theo)
+        if error < best_error:
+            best_error = error
+            best_n = n_candidate
+    plateau_results.append({
+        "start_index": index_start,
+        "mean_voltage": mean_voltage,
+        "plateau_n": best_n,
+        "error": best_error
+    })
+
+# Export des résultats dans un fichier CSV
+df_results = pd.DataFrame(plateau_results)
+df_results.to_csv("plateau_results_n.csv", index=False)
+print("Les résultats ont été exportés dans plateau_results_n.csv")
+
+# Optionnel : Visualiser la courbe de l'erreur globale en fonction de Rres
+Rres_vals, global_errors = zip(*results_Rres)
+plt.figure(figsize=(10, 6))
+plt.plot(Rres_vals, global_errors, marker='o')
+plt.title("Erreur globale en fonction de Rres")
+plt.xlabel("Rres (ohms)")
+plt.ylabel("Erreur globale")
+plt.grid(True)
 plt.show()
