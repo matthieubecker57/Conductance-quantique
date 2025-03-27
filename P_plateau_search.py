@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from MathCore import compute_conductance_order, compute_conductance
 
 """
 Define the data to search in
@@ -41,20 +42,20 @@ for i in range(len(diff)):
 """
 Print out all the plateaus so that we can can search for it manually trought the data
 """
-for index in plateaus.keys():
-    print(f"plateaus starts at {index}: \n {plateaus[index]}")
+# for index in plateaus.keys():
+#     print(f"plateaus starts at {index}: \n {plateaus[index]}")
 
 """
 Plot the plateaus
 """
 
 # If we want to overlap the plateaus to the data
-plt.plot(
-    Vwire.index.to_list(),
-    Vwire,
-    'o',
-    markersize=1,
-    color='black')
+# plt.plot(
+#     Vwire.index.to_list(),
+#     Vwire,
+#     'o',
+#     markersize=1,
+#     color='black')
 
 for index in plateaus.keys():
     indexes = plateaus[index].index.tolist()
@@ -66,21 +67,64 @@ plt.xlabel("Temps (10 microsecondes)")
 plt.grid(which='both')
 plt.show()
 
-
 """
 Plots the average voltage found for each plateau
 """
 
+# plateau_values = [np.mean(plateaus[key]) for key in plateaus.keys()]
+# plt.plot(
+#     plateaus.keys(),
+#     plateau_values,
+#     'o',
+#     markersize=2
+# )
+# plt.title("Les valeurs moyennes des divers plateaus identifiés")
+# plt.ylabel("Tension (V)")
+# plt.xlabel("Temps auquel le premier point sur le plateau a été identifié (10 microsecondes)")
+# plt.grid(which='both')
+# plt.show()
 
-plateau_values = [np.mean(plateaus[key]) for key in plateaus.keys()]
-plt.plot(
-    plateaus.keys(),
-    plateau_values,
-    'o',
-    markersize=2
-)
-plt.title("Les valeurs moyennes des divers plateaus identifiés")
-plt.ylabel("Tension (V)")
-plt.xlabel("Temps auquel le premier point sur le plateau a été identifié (10 microsecondes)")
+"""
+Plot the plateaus as conductance
+"""
+
+conductance_plateaus = {}
+
+for index in plateaus.keys():
+    conductance_plateaus[index] = compute_conductance(
+        voltage=plateaus[index],
+        source_voltage=2.5,
+        resistance=20000
+    )
+
+
+for index in conductance_plateaus.keys():
+    indexes = conductance_plateaus[index].index.tolist()
+    plt.plot(indexes, conductance_plateaus[index], 'o', markersize=2)
+
+plt.title("Les différents plateaux identifiés")
+plt.ylabel("Conductance")
+plt.xlabel("Temps (10 microsecondes)")
 plt.grid(which='both')
 plt.show()
+
+n_plateaus = {}
+
+for index in plateaus.keys():
+    n_plateaus[index] = compute_conductance_order(
+        voltage=plateaus[index],
+        source_voltage=2.5,
+        resistance=20000
+    )
+
+for index in n_plateaus.keys():
+    indexes = n_plateaus[index].index.tolist()
+    plt.plot(indexes, n_plateaus[index], 'o', markersize=2),
+
+
+plt.title("Les différents plateaux identifiés et leur ordre correspondant")
+plt.ylabel("Ordre n de la conductance")
+plt.xlabel("Temps (10 microsecondes)")
+plt.grid(which='both')
+plt.show()
+

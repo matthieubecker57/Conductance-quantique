@@ -4,18 +4,25 @@ from Graphics import Graphics
 from scipy.constants import Planck, elementary_charge
 
 G0 = 2*elementary_charge**2 / Planck
+print(G0)
 
-def compute_conductance(voltage, source_voltage, resistance = 1, gold_wire:bool = True):
+def compute_conductance(voltage, source_voltage, resistance = 1, resistance_residuelle = 250):
     """
     This method computes the conductance.
-    If gold_wire == True, then voltage is interpreted as having been taken across the gold wire.
-    If gold_wire == False, then voltage is interpreted as having been taken across the resistor.
-    """
+    It uses Ohm's law to compute the conductance of the nanowire between the gold wires.
+    It then substracts a residual resistance from the nanowire. This resistance is 250 by default.
 
-    if gold_wire:
-        return (1/resistance) * (source_voltage - voltage) / voltage
-    else:
-        return (1/resistance) * voltage / (source_voltage - voltage)
+    """
+    G = (1/resistance) * (source_voltage - voltage) / voltage
+    G_corrigé = 1/(1/G - resistance_residuelle)
+    return G_corrigé
+
+def compute_conductance_order(voltage, source_voltage, resistance = 1, resistance_residuelle = 250):
+    """
+    This method returns the factor G / G0
+    """
+    conductance = compute_conductance(voltage, source_voltage, resistance, resistance_residuelle)
+    return conductance / G0
 
 
 def compute_mean_and_std(data):
