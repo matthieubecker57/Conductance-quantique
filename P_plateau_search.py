@@ -50,12 +50,12 @@ Plot the plateaus
 """
 
 # If we want to overlap the plateaus to the data
-# plt.plot(
-#     Vwire.index.to_list(),
-#     Vwire,
-#     'o',
-#     markersize=1,
-#     color='black')
+plt.plot(
+    Vwire.index.to_list(),
+    Vwire,
+    'o',
+    markersize=1,
+    color='black')
 
 for index in plateaus.keys():
     indexes = plateaus[index].index.tolist()
