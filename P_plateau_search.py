@@ -4,6 +4,12 @@ import matplotlib.pyplot as plt
 from MathCore import compute_conductance_order, compute_conductance
 
 """
+Matplotlib math latex update
+"""
+params = {'mathtext.default': 'regular' }          
+plt.rcParams.update(params)
+
+"""
 This file will search trough the filtered data in P_filtered_data.csv and search for a series of point 
 (V_{i}, V_{i+1},...,V_{i+n}) that satisfies the following condition:
 The difference |V_{m+1} - V_{m}| between any two points in the series is smaller than a certain threshold.
@@ -68,9 +74,10 @@ for index in plateaus.keys():
     indexes = plateaus[index].index.tolist()
     plt.plot(indexes, [Vwire[index] for index in indexes], 'o', markersize=3.5),
 
+
 plt.title("Les différents plateaux identifiés")
 plt.ylabel("Tension (V)")
-plt.xlabel("Temps (10 microsecondes)")
+plt.xlabel("Temps (10 $\mu$s)")
 plt.grid(which='both')
 plt.show()
 
