@@ -1,1 +1,6 @@
 *.csv filter=lfs diff=lfs merge=lfs -text
+<<<<<<< Updated upstream
+.csv filter=lfs diff=lfs merge=lfs -text
+acquisition_data.csv filter=lfs diff=lfs merge=lfs -text
+=======
+>>>>>>> Stashed changes
