@@ -2,6 +2,9 @@ from Acquisition import Acquisition
 from Graphics import Graphics
 from MathCore import compute_conductance
 import pandas as pd
+from PSearch import Search
+import numpy as np
+import matplotlib.pyplot as plt
 
 """
 ----------------------------------------------------------------------------------------------
@@ -31,16 +34,16 @@ Arguments:
     - source_channel: the voltage across the whole circuit (so the output of the source)
 """
 
-# acquisition = Acquisition(
-#     gold_channel = "DAQ_team_3_PHS2903/ai0",  # Across the gold wires
-#     source_channel = "DAQ_team_3_PHS2903/ai1",  # Across the source
-#     samples_by_second = 100000,
-#     # number_of_samples_per_channel = 2,
-#     # export_target = r"acquisition_data.csv"
-# )
+acquisition = Acquisition(
+    gold_channel = "DAQ_team_3_PHS2903/ai0",  # Across the gold wires
+    source_channel = "DAQ_team_3_PHS2903/ai1",  # Across the source
+    samples_by_second = 100000,
+    # number_of_samples_per_channel = 2,
+    export_target = r"acquisition_data_2.csv"
+)
 
-# acquisition.continuous_acquisition()
-# acquisition.export_to_csv()
+acquisition.continuous_acquisition()
+acquisition.export_to_csv()
 
 """
 ----------------------------------------------------------------------------------------------
@@ -48,7 +51,7 @@ Create a histogram to better visualise the data
 ----------------------------------------------------------------------------------------------
 """
 
-data_file = pd.read_csv(r"acquisition_data.csv")
+data_file = pd.read_csv(r"acquisition_data_2.csv")
 
 
 """
@@ -77,3 +80,31 @@ V.regular_plot(
     # log=True
 )
 
+Vwire = np.array(data_file['Voltage_wire'])
+
+search = Search(
+    data_to_search= Vwire
+)
+
+plateaus = search.find_plateaus_diff(
+    plateau_lenght=5,
+    max_diff=0.01
+)
+print(plateaus)
+plt.plot(
+    [i for i, _ in enumerate(Vwire)],
+    Vwire,
+    'o',
+    markersize=2.5,
+    color='black')
+
+for index in plateaus.keys():
+    data = plateaus[index]
+    plt.plot([float(index) + i for i, _ in enumerate(data)], data, 'o', markersize=3.5),
+
+
+plt.title("Les différents plateaux identifiés")
+plt.ylabel("Tension (V)")
+plt.xlabel("Temps (10 $\mu$s)")
+plt.grid(which='both')
+plt.show()

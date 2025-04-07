@@ -2,12 +2,28 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from MathCore import compute_conductance_order, compute_conductance
+import csv
 
 """
 Matplotlib math latex update
 """
 params = {'mathtext.default': 'regular' }          
 plt.rcParams.update(params)
+
+path_to = r"csv folder\P_superpose_plateau.csv"
+data_OG = pd.read_csv(r"acquisition_data_1.csv")
+Vwire = data_OG["Voltage_wire"]
+
+filtered = []
+for v in Vwire:
+    if -2.35 < v < -0.15:
+        filtered.append(v)
+
+with open(path_to, 'w', newline='') as csv_file:
+    writer = csv.writer(csv_file)
+    writer.writerow(["Voltage_wire"])
+    for V in filtered:
+        writer.writerow([V])
 
 """
 This file will search trough the filtered data in P_filtered_data.csv and search for a series of point 
@@ -20,7 +36,7 @@ It then plot the plateaus found, as well as multiple other variants (conductance
 Define the data to search in
 """
 
-data_file = pd.read_csv(r"acquisition_data.csv")
+data_file = pd.read_csv(path_to)
 Vwire = data_file["Voltage_wire"]
 
 """
