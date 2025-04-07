@@ -2,6 +2,9 @@ from Acquisition import Acquisition
 from Graphics import Graphics
 from MathCore import compute_conductance
 import pandas as pd
+from PSearch import Search
+import numpy as np
+import matplotlib.pyplot as plt
 
 """
 ----------------------------------------------------------------------------------------------
@@ -31,16 +34,16 @@ Arguments:
     - source_channel: the voltage across the whole circuit (so the output of the source)
 """
 
-# acquisition = Acquisition(
-#     gold_channel = "DAQ_team_3_PHS2903/ai0",  # Across the gold wires
-#     source_channel = "DAQ_team_3_PHS2903/ai1",  # Across the source
-#     samples_by_second = 100000,
-#     # number_of_samples_per_channel = 2,
-#     # export_target = r"acquisition_data.csv"
-# )
+acquisition = Acquisition(
+    gold_channel = "DAQ_team_3_PHS2903/ai0",  # Across the gold wires
+    source_channel = "DAQ_team_3_PHS2903/ai1",  # Across the source
+    samples_by_second = 100000,
+    # number_of_samples_per_channel = 2,
+    export_target = r"acquisition_data_2.csv"
+)
 
-# acquisition.continuous_acquisition()
-# acquisition.export_to_csv()
+acquisition.continuous_acquisition()
+acquisition.export_to_csv()
 
 """
 ----------------------------------------------------------------------------------------------
@@ -48,7 +51,7 @@ Create a histogram to better visualise the data
 ----------------------------------------------------------------------------------------------
 """
 
-data_file = pd.read_csv(r"acquisition_data.csv")
+data_file = pd.read_csv(r"acquisition_data_2.csv")
 
 
 """
@@ -77,34 +80,31 @@ V.regular_plot(
     # log=True
 )
 
-"""
-Histogram of the conductance. C will be the instance of the Graphics class that will compute graphics with conductance
-"""
+Vwire = np.array(data_file['Voltage_wire'])
 
-# C = Graphics(
-#     data=compute_conductance(
-#         source_voltage=2.5,
-#         voltage=-1*data_file['Voltage_wire'],
-#         resistance=20000
-#     )
-# )
+search = Search(
+    data_to_search= Vwire
+)
 
-# C.create_histogram(
-#     bin_width=0.001
-# )
+plateaus = search.find_plateaus_diff(
+    plateau_lenght=5,
+    max_diff=0.01
+)
+print(plateaus)
+plt.plot(
+    [i for i, _ in enumerate(Vwire)],
+    Vwire,
+    'o',
+    markersize=2.5,
+    color='black')
 
-# C.graph_histogram(
-#     title="Histogram de la conductance",
-#     ylabel="count (log)",
-#     xlabel="value",
-#     markersize=0.1,
-#     log=False
-# )
+for index in plateaus.keys():
+    data = plateaus[index]
+    plt.plot([float(index) + i for i, _ in enumerate(data)], data, 'o', markersize=3.5),
 
-# C.regular_plot(
-#     title="Histogram de la conductance",
-#     ylabel="count (log)",
-#     xlabel="value",
-#     markersize=0.1,
-#     log=False
-# )
+
+plt.title("Les différents plateaux identifiés")
+plt.ylabel("Tension (V)")
+plt.xlabel("Temps (10 $\mu$s)")
+plt.grid(which='both')
+plt.show()
