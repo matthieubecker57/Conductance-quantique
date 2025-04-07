@@ -90,32 +90,32 @@ class Search:
     
 
 
-data_file = pd.read_csv(r"csv folder\P_filtered_data.csv")
-Vwire = np.array(data_file["Voltage_wire"])
-s = Search(data_to_search=Vwire)
-# plateaus = s.find_plateaus_box(
-#     plateau_lenght=7,
-#     plateu_height=0.005
+# data_file = pd.read_csv(r"csv folder\P_filtered_data.csv")
+# Vwire = np.array(data_file["Voltage_wire"])
+# s = Search(data_to_search=Vwire)
+# # plateaus = s.find_plateaus_box(
+# #     plateau_lenght=7,
+# #     plateu_height=0.005
+# # )
+# plateaus = s.find_plateaus_diff(
+#     plateau_lenght=5,
+#     max_diff=0.01
 # )
-plateaus = s.find_plateaus_diff(
-    plateau_lenght=5,
-    max_diff=0.01
-)
-print(plateaus)
-plt.plot(
-    [i for i, _ in enumerate(Vwire)],
-    Vwire,
-    'o',
-    markersize=2.5,
-    color='black')
+# print(plateaus)
+# plt.plot(
+#     [i for i, _ in enumerate(Vwire)],
+#     Vwire,
+#     'o',
+#     markersize=2.5,
+#     color='black')
 
-for index in plateaus.keys():
-    data = plateaus[index]
-    plt.plot([float(index) + i for i, _ in enumerate(data)], data, 'o', markersize=3.5),
+# for index in plateaus.keys():
+#     data = plateaus[index]
+#     plt.plot([float(index) + i for i, _ in enumerate(data)], data, 'o', markersize=3.5),
 
 
-plt.title("Les différents plateaux identifiés")
-plt.ylabel("Tension (V)")
-plt.xlabel("Temps (10 $\mu$s)")
-plt.grid(which='both')
-plt.show()
+# plt.title("Les différents plateaux identifiés")
+# plt.ylabel("Tension (V)")
+# plt.xlabel("Temps (10 $\mu$s)")
+# plt.grid(which='both')
+# plt.show()

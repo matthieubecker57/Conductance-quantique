@@ -12,7 +12,8 @@ Declaring general variables
 ----------------------------------------------------------------------------------------------
 """
 
-""" NImyDAQ_caracteristics:
+"""
+NImyDAQ_caracteristics:
 Range width corresponds to the analog input range used. The NimyDAQ has either +- 2V or +- 10V,
     corresponding with a width of 4 or 20 V, respectively.
 Number of bits is given by the manifacturer
@@ -39,7 +40,7 @@ acquisition = Acquisition(
     source_channel = "DAQ_team_3_PHS2903/ai1",  # Across the source
     samples_by_second = 100000,
     # number_of_samples_per_channel = 2,
-    export_target = r"acquisition_data_2.csv"
+    export_target = r"acquisition_data_4.csv"
 )
 
 acquisition.continuous_acquisition()
@@ -51,7 +52,7 @@ Create a histogram to better visualise the data
 ----------------------------------------------------------------------------------------------
 """
 
-data_file = pd.read_csv(r"acquisition_data_2.csv")
+data_file = pd.read_csv(r"acquisition_data_4.csv")
 
 
 """
@@ -90,7 +91,7 @@ plateaus = search.find_plateaus_diff(
     plateau_lenght=5,
     max_diff=0.01
 )
-print(plateaus)
+
 plt.plot(
     [i for i, _ in enumerate(Vwire)],
     Vwire,
