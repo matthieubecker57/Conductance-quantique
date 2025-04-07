@@ -2,12 +2,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import csv
+from scipy.optimize import curve_fit
 from MathCore import G0  # Assurez-vous que G0 est défini correctement dans MathCore
 #from Graphics import Graphics  # Si nécessaire pour vos graphiques spécifiques
 
 # --- Paramètres expérimentaux communs ---
 source_voltage = 2.5
-resistance = 20000
+# On ne fixe plus R, on va l'estimer via l'ajustement
 
 # =============================================================================
 # ETAPE 1 : Prétraitement et filtrage des données brutes
@@ -24,10 +25,10 @@ def process_acquisition_data(acquisition_file="acquisition_data.csv", output_fil
     Vwire = -np.array(data_file["Voltage_wire"])
     
     # Définition de la fonction de calcul de la tension théorique
-    def expected_plateau_voltage(n: int, Rres: float, V=source_voltage, R=resistance):
+    def expected_plateau_voltage(n: int, Rres: float, V=source_voltage, R=20000):
         return V / (1 + R / (1/(n * G0) + Rres))
     
-    # Calcul des plages attendues pour n=1 à 5
+    # Calcul des plages attendues pour n=1 à 5 (on garde ici R=20000 pour le filtrage)
     expected_plateau_voltages_min = np.array([expected_plateau_voltage(n=i+1, Rres=0) for i in range(5)])
     expected_plateau_voltages_max = np.array([expected_plateau_voltage(n=i+1, Rres=600) for i in range(5)])
     
@@ -72,7 +73,7 @@ def process_acquisition_data(acquisition_file="acquisition_data.csv", output_fil
     plt.show()
 
 # =============================================================================
-# ETAPE 2 : Détection des plateaux et optimisation de Rres
+# ETAPE 2 : Détection des plateaux et attribution de n
 # =============================================================================
 
 def detect_plateaus(filtered_data_file="P_filtered_data.csv", points_per_plateau=5, max_diff=1e-2):
@@ -126,51 +127,17 @@ def detect_plateaus(filtered_data_file="P_filtered_data.csv", points_per_plateau
     
     return plateaus
 
-def expected_plateau_voltage(n: int, Rres: float, V=source_voltage, R=resistance):
+def expected_plateau_voltage(n: int, Rres: float, V=source_voltage, R=20000):
     """
     Calcule la tension théorique aux bornes des fils d'or pour un plateau de conductance nG0.
+    (Ici, R=20000 est utilisé uniquement pour l'attribution de n.)
     """
     return V / (1 + R / (1/(n * G0) + Rres))
 
-def optimize_Rres(plateaus, V=source_voltage, R=resistance, n_range=(1, 6)):
+def assign_plateau_n(plateaus, dummy_Rres, V=source_voltage, R=20000, n_range=(1, 6)):
     """
-    Balaye Rres de 0 à 600 ohms pour déterminer la valeur qui minimise l'erreur globale
-    sur tous les plateaux.
-    Retourne le meilleur Rres et la liste des résultats.
-    """
-    Rres_candidates = np.linspace(0, 600, 601*10)  # par pas de 1 ohms
-    results_Rres = []
-    for Rres_val in Rres_candidates:
-        global_error = 0
-        for idx, plateau_data in plateaus.items():
-            mean_voltage = np.mean(plateau_data)
-            best_error = np.inf
-            for n_candidate in range(n_range[0], n_range[1]):
-                v_theo = expected_plateau_voltage(n_candidate, Rres_val, V, R)
-                error = abs(mean_voltage - v_theo)
-                if error < best_error:
-                    best_error = error
-            global_error += best_error
-        results_Rres.append((Rres_val, global_error))
-    best_Rres, best_global_error = min(results_Rres, key=lambda x: x[1])
-    print(f"Meilleur Rres : {best_Rres:.1f} ohms avec une erreur globale de {best_global_error:.4f}")
-    
-    # Visualisation de l'erreur globale en fonction de Rres
-    Rres_vals, global_errors = zip(*results_Rres)
-    plt.figure(figsize=(10,6))
-    plt.plot(Rres_vals, global_errors, marker='o')
-    plt.title("Erreur globale en fonction de Rres")
-    plt.xlabel("Rres (ohms)")
-    plt.ylabel("Erreur globale")
-    plt.grid(False)
-    plt.show()
-    
-    return best_Rres, results_Rres
-
-def assign_plateau_n(plateaus, best_Rres, V=source_voltage, R=resistance, n_range=(1, 6)):
-    """
-    Pour chaque plateau, attribue le n (de 1 à 5) pour lequel la tension théorique calculée avec best_Rres
-    est la plus proche de la tension moyenne mesurée.
+    Pour chaque plateau, attribue le n (de 1 à 5) pour lequel la tension théorique
+    (calculée avec dummy_Rres, par exemple 0) est la plus proche de la tension moyenne mesurée.
     Retourne une liste de dictionnaires contenant start_index, mean_voltage, plateau_n et l'erreur.
     """
     plateau_results = []
@@ -179,7 +146,7 @@ def assign_plateau_n(plateaus, best_Rres, V=source_voltage, R=resistance, n_rang
         best_n = None
         best_error = np.inf
         for n_candidate in range(n_range[0], n_range[1]):
-            v_theo = expected_plateau_voltage(n_candidate, best_Rres, V, R)
+            v_theo = expected_plateau_voltage(n_candidate, dummy_Rres, V, R)
             error = abs(mean_voltage - v_theo)
             if error < best_error:
                 best_error = error
@@ -197,40 +164,52 @@ def assign_plateau_n(plateaus, best_Rres, V=source_voltage, R=resistance, n_rang
     return plateau_results
 
 # =============================================================================
-# ETAPE 3 : Calcul de Rinconnue à partir des résultats des plateaux
+# NOUVELLE ETAPE : Estimation de R et R_res par ajustement du modèle théorique
 # =============================================================================
 
-def compute_Rinconnue(V_source=source_voltage, Rres_optimal=300):
+def estimate_R_parameters(plateau_csv="plateau_results_n.csv", V_source=source_voltage):
     """
-    Lit le CSV plateau_results_n.csv, calcule Rinconnue pour chaque plateau et exporte le résultat dans un CSV.
-    La formule utilisée est :
-        Rinconnue = (V_source / mean_voltage - 1) * (1/(n * G0) + Rres_optimal)
+    Estime les valeurs de R et R_res en ajustant le modèle théorique aux données mesurées.
+    
+    Le modèle théorique est :
+         V_plateau(n) = V_source / (1 + R / (1/(n * G0) + R_res))
+         
+    On utilise les valeurs de n (plateau_n) et la tension moyenne (mean_voltage) issues du CSV.
     """
-    df_plateaux = pd.read_csv("plateau_results_n.csv")
+    df = pd.read_csv(plateau_csv)
+    # Extraction des valeurs de plateau_n et des tensions moyennes
+    n_vals = df["plateau_n"].values.astype(float)
+    V_plateau = df["mean_voltage"].values.astype(float)
     
-    def calc_Rinconnue(row):
-        return (V_source / row["mean_voltage"] - 1) * (1/(row["plateau_n"] * G0) + Rres_optimal)
+    # Définition du modèle de tension théorique
+    def model(n, R, R_res):
+        return V_source / (1 + R / (1/(n * G0) + R_res))
     
-    df_plateaux["Rinconnue"] = df_plateaux.apply(calc_Rinconnue, axis=1)
+    # Valeurs initiales pour l'ajustement (à ajuster selon vos connaissances)
+    initial_guess = [20000, 236.9]  # Exemple : 20kΩ et 236.9Ω
     
-    R_mean = df_plateaux["Rinconnue"].mean()
-    R_std = df_plateaux["Rinconnue"].std()
-    print(f"Moyenne de Rinconnue : {R_mean:.4f} Ω")
-    print(f"Écart-type de Rinconnue : {R_std:.4f} Ω")
+    # Ajustement par curve_fit
+    popt, pcov = curve_fit(model, n_vals, V_plateau, p0=initial_guess)
+    R_fit, R_res_fit = popt
+    # Calcul des incertitudes (erreur standard) sur les paramètres
+    perr = np.sqrt(np.diag(pcov))
     
-    df_plateaux.to_csv("Rinconnue_results.csv", index=False)
-    print("Les résultats de Rinconnue ont été exportés dans Rinconnue_results.csv")
+    print(f"Estimation : R = {R_fit:.2f} Ω ± {perr[0]:.2f} Ω, R_res = {R_res_fit:.2f} Ω ± {perr[1]:.2f} Ω")
     
-    # Visualisation de l'histogramme de Rinconnue
-    plt.figure(figsize=(10,6))
-    plt.hist(df_plateaux["Rinconnue"], bins=10, edgecolor='black')
-    plt.title("Histogramme de Rinconnue")
-    plt.xlabel("Rinconnue (Ω)")
-    plt.ylabel("Fréquence")
-    plt.grid(True)
+    # Optionnel : tracer le modèle ajusté par rapport aux données mesurées
+    n_fit = np.linspace(min(n_vals), max(n_vals), 100)
+    V_fit = model(n_fit, R_fit, R_res_fit)
+    plt.figure(figsize=(8,6))
+    plt.plot(n_vals, V_plateau, 'o', label="Données mesurées")
+    plt.plot(n_fit, V_fit, '-', label="Modèle ajusté")
+    plt.xlabel("Plateau n")
+    plt.ylabel("Tension moyenne (V)")
+    plt.title("Ajustement du modèle théorique")
+    plt.legend()
     plt.show()
     
-    return df_plateaux
+    return R_fit, R_res_fit
+
 
 # =============================================================================
 # Fonction principale : exécute l'ensemble du pipeline
@@ -240,14 +219,13 @@ def main():
     # Étape 1 : Prétraitement et filtrage
     process_acquisition_data("acquisition_data.csv", "P_filtered_data.csv")
     
-    # Étape 2 : Détection des plateaux et optimisation de Rres
+    # Étape 2 : Détection des plateaux et attribution de n
     plateaus = detect_plateaus("P_filtered_data.csv", points_per_plateau=5, max_diff=1e-2)
-    best_Rres, _ = optimize_Rres(plateaus, V=source_voltage, R=resistance, n_range=(1,6))
-    plateau_results = assign_plateau_n(plateaus, best_Rres, V=source_voltage, R=resistance, n_range=(1,6))
+    # Pour l'attribution de n, on passe une valeur fictive pour R_res (ici 0)
+    plateau_results = assign_plateau_n(plateaus, dummy_Rres=0, V=source_voltage, R=20000, n_range=(1,6))
     
-    # Étape 3 : Calcul de Rinconnue
-    # Ici, nous utilisons best_Rres trouvé précédemment comme Rres_optimal
-    compute_Rinconnue(V_source=source_voltage, Rres_optimal=best_Rres)
-
+    # Nouvelle étape : estimation de R et R_res par ajustement du modèle
+    R_est, R_res_est = estimate_R_parameters("plateau_results_n.csv", V_source=source_voltage)
+    
 if __name__ == "__main__":
     main()
